@@ -20,11 +20,18 @@ async def do_reliable_request(url: str, observer: ResultsObserver) -> None:
     """
 
     async with httpx.AsyncClient() as client:
-        # YOUR CODE GOES HERE
-        response = await client.get(url)
-        response.raise_for_status()
-        data = response.read()
-
-        observer.observe(data)
-        return
-        #####################
+        while True:
+            try:
+                # Отключаем таймауты или ставим очень большие, чтобы пережить "медленный" сервер
+                response = await client.get(
+                    url,
+                    timeout=httpx.Timeout(60.0, connect=10.0)  # большие таймауты
+                )
+                response.raise_for_status()
+                data = response.read()
+                observer.observe(data)
+                return
+            except (httpx.TimeoutException, httpx.NetworkError, httpx.HTTPStatusError):
+                # При любой ошибке связи или 5xx просто повторяем запрос
+                # (в тестах сервер иногда "падает" или отвечает медленно)
+                continue
