@@ -61,7 +61,6 @@ class ItemStorage:
                 """
                 INSERT INTO items (item_id, user_id, title, description)
                 VALUES ($1, $2, $3, $4)
-                ON CONFLICT (item_id) DO NOTHING;
                 """,
                 [(i.item_id, i.user_id, i.title, i.description) for i in items]
             )
